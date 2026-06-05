@@ -1,0 +1,22 @@
+# Claude / agent tooling
+CLAUDE.md
+.claude/
+.claude-*/
+.anthropic/
+
+# Node / build output
+node_modules/
+Trustabl/node_modules/
+Trustabl/index.js
+Trustabl/*.js.map
+*.tsbuildinfo
+
+# Packaged extension
+*.vsix
+
+# Local scan artifacts
+*.sarif
+trustabl.json
+trustabl.env
+trustabl-summary.md
+trustabl-bin/

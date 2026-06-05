@@ -1,0 +1,19 @@
+{
+  "name": "trustabl-task",
+  "version": "0.1.0",
+  "description": "Trustabl — Azure DevOps pipeline task",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "SEE LICENSE IN ../LICENSE",
+  "dependencies": {
+    "azure-pipelines-task-lib": "^4.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.18.0",
+    "typescript": "^5.4.5"
+  }
+}

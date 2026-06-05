@@ -1,0 +1,119 @@
+name: Publish extension
+
+# Auto-publishes the Trustabl Azure DevOps extension to the Visual Studio
+# Marketplace whenever a semver tag is pushed (e.g. v0.1.0).
+#
+# Version policy:
+#   - git tag carries the `v` prefix (v0.1.0) — triggers this workflow.
+#   - the Marketplace/manifest version is pure Major.Minor.Patch (0.1.0) — a `v`
+#     prefix is rejected by tfx. The "Resolve version" step strips it.
+#   - BOTH the extension version (vss-extension.json) AND the task version
+#     (Trustabl/task.json) are stamped from the tag. Bumping only the extension
+#     leaves pipelines running the cached old task — Azure keys tasks by version.
+#
+# Prerequisites (set on GitHub before the first tag):
+#   - secret VS_MARKETPLACE_TOKEN: an Azure DevOps PAT under the publisher account,
+#     scope "Marketplace > Manage", all accessible organizations.
+#   - (optional) var AZURE_DEVOPS_ORG: org slug to auto-share the private extension.
+#   - a real `publisher` id in vss-extension.json that owns the PAT above.
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish, no v prefix (e.g. 0.1.0)'
+        required: true
+
+permissions:
+  contents: write   # create the GitHub Release + upload the .vsix
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Resolve version
+        id: ver
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"   # v0.1.0 -> 0.1.0
+          fi
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Version '$VERSION' is not Major.Minor.Patch" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing version $VERSION"
+
+      - name: Stamp version into manifests
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const v = process.env.VERSION;
+            const [maj, min, pat] = v.split(".").map(Number);
+
+            const extPath = "vss-extension.json";
+            const ext = JSON.parse(fs.readFileSync(extPath, "utf8"));
+            ext.version = v;
+            fs.writeFileSync(extPath, JSON.stringify(ext, null, 2) + "\n");
+
+            const taskPath = "Trustabl/task.json";
+            const task = JSON.parse(fs.readFileSync(taskPath, "utf8"));
+            task.version = { Major: maj, Minor: min, Patch: pat };
+            fs.writeFileSync(taskPath, JSON.stringify(task, null, 2) + "\n");
+
+            console.log("Stamped " + v + " into vss-extension.json and Trustabl/task.json");
+          '
+
+      - name: Build task
+        working-directory: Trustabl
+        run: |
+          npm ci
+          npm run build           # tsc -> index.js
+          npm prune --production  # drop devDeps from the packaged node_modules
+
+      - name: Package .vsix
+        id: pkg
+        run: |
+          npm i -g tfx-cli
+          tfx extension create --manifest-globs vss-extension.json --output-path .
+          VSIX="$(ls -1 *.vsix | head -n1)"
+          echo "vsix=$VSIX" >> "$GITHUB_OUTPUT"
+          echo "Built $VSIX"
+
+      - name: Publish to Marketplace
+        env:
+          TFX_PAT: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          SHARE_ORG: ${{ vars.AZURE_DEVOPS_ORG }}
+        run: |
+          if [ -z "$TFX_PAT" ]; then
+            echo "::error::Secret VS_MARKETPLACE_TOKEN is not set" >&2
+            exit 1
+          fi
+          SHARE=""
+          if [ -n "$SHARE_ORG" ]; then
+            SHARE="--share-with $SHARE_ORG"
+          fi
+          tfx extension publish \
+            --vsix "${{ steps.pkg.outputs.vsix }}" \
+            --token "$TFX_PAT" \
+            --no-prompt \
+            $SHARE
+
+      - name: Attach .vsix to the GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.pkg.outputs.vsix }}

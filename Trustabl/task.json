@@ -1,0 +1,149 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
+  "id": "b2f1c8a4-3e6d-4c2a-9f1b-7a5e9d0c4f31",
+  "name": "Trustabl",
+  "friendlyName": "Trustabl",
+  "description": "Static reliability/safety scanner for AI agent repos (Claude, OpenAI, Google ADK, MCP). Gates the pipeline on risk + severity.",
+  "helpMarkDown": "Runs the [trustabl](https://github.com/trustabl/trustabl) scanner over your repo, prints a readiness report, publishes JSON + SARIF artifacts, and can fail the build on a risk-score or severity threshold. See the extension README.",
+  "category": "Utility",
+  "author": "Trustabl",
+  "version": { "Major": 0, "Minor": 1, "Patch": 0 },
+  "instanceNameFormat": "Trustabl $(target)",
+  "groups": [
+    { "name": "thresholds", "displayName": "Failure gates", "isExpanded": true },
+    { "name": "output", "displayName": "Output & artifacts", "isExpanded": false },
+    { "name": "advanced", "displayName": "Advanced", "isExpanded": false }
+  ],
+  "inputs": [
+    {
+      "name": "target",
+      "type": "string",
+      "label": "Scan target",
+      "defaultValue": "$(Build.SourcesDirectory)",
+      "required": false,
+      "helpMarkDown": "Path or GitHub URL to scan. Defaults to the checked-out sources."
+    },
+    {
+      "name": "version",
+      "type": "string",
+      "label": "trustabl version",
+      "defaultValue": "latest",
+      "required": false,
+      "helpMarkDown": "trustabl release tag (e.g. v0.5.0) or 'latest'."
+    },
+    {
+      "name": "detectors",
+      "type": "string",
+      "label": "Detectors",
+      "defaultValue": "",
+      "required": false,
+      "helpMarkDown": "Comma-separated SDK detectors (claude_sdk,openai_sdk,google_adk). Empty = all."
+    },
+    {
+      "name": "strict",
+      "type": "boolean",
+      "label": "Strict mode",
+      "defaultValue": "false",
+      "required": false,
+      "helpMarkDown": "Pass --strict (fail on any finding regardless of severity)."
+    },
+    {
+      "name": "riskScoreThreshold",
+      "type": "string",
+      "label": "Risk-score threshold",
+      "defaultValue": "0",
+      "required": false,
+      "groupName": "thresholds",
+      "helpMarkDown": "Fail when risk (100 - readiness) >= N (1-100). 0 = disabled."
+    },
+    {
+      "name": "severityThreshold",
+      "type": "pickList",
+      "label": "Severity threshold",
+      "defaultValue": "none",
+      "required": false,
+      "groupName": "thresholds",
+      "options": {
+        "none": "none (disabled)",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "critical": "critical"
+      },
+      "helpMarkDown": "Fail when any finding's severity is >= this level."
+    },
+    {
+      "name": "publishArtifact",
+      "type": "boolean",
+      "label": "Publish scan results as a build artifact",
+      "defaultValue": "true",
+      "required": false,
+      "groupName": "output",
+      "helpMarkDown": "Upload trustabl.json + trustabl.sarif as a pipeline artifact."
+    },
+    {
+      "name": "artifactName",
+      "type": "string",
+      "label": "Artifact name",
+      "defaultValue": "trustabl-scan-results",
+      "required": false,
+      "groupName": "output",
+      "helpMarkDown": "Name of the published artifact."
+    },
+    {
+      "name": "sarifFile",
+      "type": "string",
+      "label": "SARIF output path",
+      "defaultValue": "trustabl.sarif",
+      "required": false,
+      "groupName": "output",
+      "helpMarkDown": "Path to write SARIF output."
+    },
+    {
+      "name": "jsonFile",
+      "type": "string",
+      "label": "JSON output path",
+      "defaultValue": "trustabl.json",
+      "required": false,
+      "groupName": "output",
+      "helpMarkDown": "Path to write the full JSON ScanResult."
+    },
+    {
+      "name": "rulesRef",
+      "type": "string",
+      "label": "Rules ref",
+      "defaultValue": "",
+      "required": false,
+      "groupName": "advanced",
+      "helpMarkDown": "Pin a trustabl-rules git ref. Empty = trustabl default."
+    },
+    {
+      "name": "rulesRepo",
+      "type": "string",
+      "label": "Rules repo",
+      "defaultValue": "",
+      "required": false,
+      "groupName": "advanced",
+      "helpMarkDown": "Override trustabl-rules source repo (sets TRUSTABL_RULES_REPO)."
+    },
+    {
+      "name": "githubToken",
+      "type": "string",
+      "label": "GitHub token",
+      "defaultValue": "",
+      "required": false,
+      "groupName": "advanced",
+      "helpMarkDown": "Optional GitHub token (bearer) to avoid the anonymous GitHub API rate limit on version resolution + binary download. Pass a secret variable, e.g. $(GITHUB_TOKEN)."
+    }
+  ],
+  "OutputVariables": [
+    { "name": "readinessScore", "description": "Readiness score, integer percent [0,100], higher = better." },
+    { "name": "riskScore", "description": "100 - readiness. Integer [0,100], higher = worse." },
+    { "name": "maxSeverity", "description": "Highest severity among findings, or 'none'." },
+    { "name": "findingsCount", "description": "Total finding count." },
+    { "name": "exitCode", "description": "trustabl native exit code (0 clean / 1 findings / 2 error)." }
+  ],
+  "execution": {
+    "Node20_1": { "target": "index.js" }
+  }
+}

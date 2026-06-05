@@ -1,0 +1,38 @@
+{
+  "manifestVersion": 1,
+  "id": "trustabl-azure-devops-extension",
+  "name": "Trustabl",
+  "version": "0.1.0",
+  "publisher": "trustabl",
+  "public": true,
+  "description": "Static reliability/safety scanner for AI agent repos (Claude, OpenAI, Google ADK, MCP). Gates Azure Pipelines on risk + severity.",
+  "categories": ["Azure Pipelines"],
+  "tags": ["security", "ai-agents", "static-analysis", "sast", "devsecops", "reliability"],
+  "targets": [
+    { "id": "Microsoft.VisualStudio.Services" }
+  ],
+  "icons": {
+    "default": "images/icon.png"
+  },
+  "content": {
+    "details": { "path": "README.md" },
+    "license": { "path": "LICENSE" }
+  },
+  "links": {
+    "home": { "uri": "https://github.com/trustabl/trustabl" }
+  },
+  "files": [
+    { "path": "Trustabl" },
+    { "path": "images", "addressable": true }
+  ],
+  "contributions": [
+    {
+      "id": "trustabl-task",
+      "type": "ms.vss-distributed-task.task",
+      "targets": ["ms.vss-distributed-task.tasks"],
+      "properties": {
+        "name": "Trustabl"
+      }
+    }
+  ]
+}
