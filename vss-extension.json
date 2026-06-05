@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "trustabl-azure-devops-extension",
   "name": "Trustabl",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "trustabl",
   "public": true,
   "description": "Static reliability/safety scanner for AI agent repos (Claude, OpenAI, Google ADK, MCP). Gates Azure Pipelines on risk + severity.",
@@ -15,7 +15,7 @@
     "default": "images/icon.png"
   },
   "content": {
-    "details": { "path": "README.md" },
+    "details": { "path": "overview.md" },
     "license": { "path": "LICENSE" }
   },
   "links": {

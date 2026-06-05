@@ -20,3 +20,6 @@ trustabl.json
 trustabl.env
 trustabl-summary.md
 trustabl-bin/
+
+# OS / shell junk
+*.stackdump
