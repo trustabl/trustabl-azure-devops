@@ -8,13 +8,15 @@ OpenAI Agents SDK, Google ADK, MCP).
 > (install it and reference the task in your pipelines). Copying, forking,
 > modifying, or redistributing the source is **not** permitted. See [`LICENSE`](LICENSE).
 
-The task:
+## Capabilities
+
 - Downloads the official `trustabl` release binary (Linux / Windows / macOS agents).
 - Scans your sources for tools, agents, subagents, and MCP servers.
-- Prints a readiness report and uploads a markdown **run summary**.
+- Computes a **readiness** score and its inverse **risk** score.
+- **Fails the build** on a risk-score or severity threshold (both optional).
 - Publishes `trustabl.json` + `trustabl.sarif` as a **pipeline artifact**.
-- Exposes output variables (readiness, risk, severity, findings count, exit code).
-- Optionally **fails the build** on a risk-score or severity threshold.
+- Uploads a markdown **run summary** and prints a console report.
+- Exposes **output variables** (readiness, risk, severity, findings count, exit code).
 
 ## Usage
 
@@ -31,6 +33,30 @@ flags medium+):
 ```yaml
 steps:
   - task: Trustabl@0
+```
+
+### Full example (annotated)
+
+Every input shown with its default and purpose:
+
+```yaml
+steps:
+  - task: Trustabl@0
+    name: trustabl                        # ref name → read outputs as $(trustabl.<var>)
+    inputs:
+      target: $(Build.SourcesDirectory)   # path or GitHub URL to scan
+      version: latest                     # trustabl release tag (e.g. v0.5.0) or 'latest'
+      detectors: ''                       # subset: claude_sdk,openai_sdk,google_adk — empty = all
+      strict: false                       # --strict: fail on ANY finding, regardless of severity
+      riskScoreThreshold: '0'             # fail when risk (100 - readiness) >= N (1-100); 0 = off
+      severityThreshold: none             # fail at >= none | low | medium | high | critical
+      publishArtifact: true               # upload trustabl.json + trustabl.sarif as an artifact
+      artifactName: trustabl-scan-results # name of that artifact
+      sarifFile: trustabl.sarif           # SARIF output path
+      jsonFile: trustabl.json             # JSON ScanResult output path
+      rulesRef: ''                        # pin a trustabl-rules git ref (empty = default)
+      rulesRepo: ''                       # override trustabl-rules source repo (empty = default)
+      githubToken: $(GITHUB_TOKEN)        # optional secret to dodge the GitHub API rate limit
 ```
 
 ### Consuming outputs
