@@ -92,39 +92,3 @@ tfx extension create --manifest-globs vss-extension.json
 
 Upload the resulting `.vsix` to the Visual Studio Marketplace, then install it on
 your Azure DevOps organization.
-
-## Releasing
-
-Publishing is automated by
-[`.github/workflows/publish-extension.yml`](.github/workflows/publish-extension.yml).
-Push a semver tag and the workflow packages and publishes to the Marketplace:
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-**Versioning:** the git **tag** carries the `v` (`v0.1.0`); the **Marketplace**
-version is pure `Major.Minor.Patch` (`0.1.0`) — a `v` prefix is rejected. The
-workflow strips the `v` and stamps the version into **both** `vss-extension.json`
-**and** `Trustabl/task.json` (bumping only the extension leaves pipelines on the
-cached old task — Azure keys tasks by version).
-
-**One-time setup before the first tag:**
-- Secret **`VS_MARKETPLACE_TOKEN`** — an Azure DevOps PAT under the publisher
-  account, scope **Marketplace → Manage**, all accessible organizations.
-- The **`publisher`** id in `vss-extension.json` must match the Marketplace
-  publisher that owns the PAT above.
-- *(Optional)* repo var **`AZURE_DEVOPS_ORG`** — org slug; when set, the workflow
-  shares the extension with that org after publishing.
-
-A GitHub Release is created for the tag with the `.vsix` attached.
-
-## Notes
-
-- Runs on Linux, Windows, and macOS agents (`curl` + `tar`/bsdtar are present on
-  Microsoft-hosted agents).
-- Azure has no native SARIF/SAST security widget, so SARIF is published as a plain
-  downloadable artifact.
-- Icons: `images/icon.png` (128×128 extension) and `Trustabl/icon.png`
-  (32×32 task) are the Trustabl logo.
