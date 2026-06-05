@@ -7,7 +7,7 @@
   "helpMarkDown": "Runs the [trustabl](https://github.com/trustabl/trustabl) scanner over your repo, prints a readiness report, publishes JSON + SARIF artifacts, and can fail the build on a risk-score or severity threshold. See the extension README.",
   "category": "Utility",
   "author": "Trustabl",
-  "version": { "Major": 0, "Minor": 1, "Patch": 2 },
+  "version": { "Major": 0, "Minor": 1, "Patch": 1 },
   "instanceNameFormat": "Trustabl $(target)",
   "groups": [
     { "name": "thresholds", "displayName": "Failure gates", "isExpanded": true },
