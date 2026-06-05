@@ -1,10 +1,9 @@
 /*
  * Trustabl — Azure DevOps pipeline task.
  *
- * Azure analog of the trustabl GitHub Action / GitLab CI/CD component. Downloads
- * the trustabl release binary, scans the target, computes the readiness/risk
- * score, gates the build on risk/severity thresholds, publishes JSON + SARIF
- * artifacts, and uploads a markdown run summary.
+ * Downloads the trustabl release binary, scans the target, computes the
+ * readiness/risk score, gates the build on risk/severity thresholds, publishes
+ * JSON + SARIF artifacts, and uploads a markdown run summary.
  *
  * Proprietary — see LICENSE. Not open source.
  */
@@ -19,7 +18,7 @@ interface Finding { severity?: string; tool_name?: string; confidence?: number; 
 interface Readiness { tool_name?: string; weighted_severity?: number; }
 interface ScanResult { overall_score?: number; findings?: Finding[]; readiness?: Readiness[]; }
 
-// ---- scoring (ported verbatim from the GitHub Action's bash/jq/awk) ----
+// ---- scoring (mirrors trustabl's own readiness/risk formula) ----
 function severityWeight(s: string): number {
   return s === 'critical' ? 1.0 : s === 'high' ? 0.7 : s === 'medium' ? 0.4 : s === 'low' ? 0.15 : 0.05;
 }

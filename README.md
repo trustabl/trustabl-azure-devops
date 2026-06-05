@@ -2,8 +2,7 @@
 
 An Azure Pipelines task that runs [trustabl](https://github.com/trustabl/trustabl),
 the static reliability/safety analyzer for AI agent repos (Claude Agent SDK,
-OpenAI Agents SDK, Google ADK, MCP). The Azure analog of the Trustabl GitHub
-Action and GitLab CI/CD component.
+OpenAI Agents SDK, Google ADK, MCP).
 
 > **⚠️ Proprietary — not open source.** This extension is licensed for **use only**
 > (install it and reference the task in your pipelines). Copying, forking,
@@ -75,10 +74,7 @@ steps:
 | `findingsCount` | Total finding count. |
 | `exitCode` | trustabl native exit code (0 / 1 / 2). |
 
-## Local development
-
-This repo is developed locally for now (destined for GitHub later as
-`trustabl/trustabl-azure-devops`).
+## Building from source
 
 ```bash
 cd Trustabl
@@ -87,15 +83,15 @@ npm run typecheck   # tsc --noEmit
 npm run build       # tsc → emits index.js next to task.json
 ```
 
-Package the extension (later, needs `tfx-cli`):
+Package the extension (needs `tfx-cli`):
 
 ```bash
 npm i -g tfx-cli
 tfx extension create --manifest-globs vss-extension.json
 ```
 
-Then upload the resulting `.vsix` to the Visual Studio Marketplace (private) and
-install it on your Azure DevOps organization.
+Upload the resulting `.vsix` to the Visual Studio Marketplace, then install it on
+your Azure DevOps organization.
 
 ## Releasing
 
@@ -117,9 +113,10 @@ cached old task — Azure keys tasks by version).
 **One-time setup before the first tag:**
 - Secret **`VS_MARKETPLACE_TOKEN`** — an Azure DevOps PAT under the publisher
   account, scope **Marketplace → Manage**, all accessible organizations.
-- Real **`publisher`** id in `vss-extension.json` (must own the PAT above).
+- The **`publisher`** id in `vss-extension.json` must match the Marketplace
+  publisher that owns the PAT above.
 - *(Optional)* repo var **`AZURE_DEVOPS_ORG`** — org slug; when set, the workflow
-  auto-shares the private extension with that org so it's installable.
+  shares the extension with that org after publishing.
 
 A GitHub Release is created for the tag with the `.vsix` attached.
 
@@ -128,8 +125,6 @@ A GitHub Release is created for the tag with the `.vsix` attached.
 - Runs on Linux, Windows, and macOS agents (`curl` + `tar`/bsdtar are present on
   Microsoft-hosted agents).
 - Azure has no native SARIF/SAST security widget, so SARIF is published as a plain
-  artifact (unlike the GitLab component's gl-sast integration).
-- The `publisher` in `vss-extension.json` is a placeholder — set it to your real
-  Marketplace publisher ID before packaging.
+  downloadable artifact.
 - Icons: `images/icon.png` (128×128 extension) and `Trustabl/icon.png`
   (32×32 task) are the Trustabl logo.
