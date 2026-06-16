@@ -12,6 +12,7 @@
   "groups": [
     { "name": "thresholds", "displayName": "Failure gates", "isExpanded": true },
     { "name": "output", "displayName": "Output & artifacts", "isExpanded": false },
+    { "name": "enrich", "displayName": "AI enrichment", "isExpanded": false },
     { "name": "advanced", "displayName": "Advanced", "isExpanded": false }
   ],
   "inputs": [
@@ -134,6 +135,51 @@
       "required": false,
       "groupName": "advanced",
       "helpMarkDown": "Optional GitHub token (bearer) to avoid the anonymous GitHub API rate limit on version resolution + binary download. Pass a secret variable, e.g. $(GITHUB_TOKEN)."
+    },
+    {
+      "name": "enrich",
+      "type": "boolean",
+      "label": "Run AI enrichment",
+      "defaultValue": "false",
+      "required": false,
+      "groupName": "enrich",
+      "helpMarkDown": "Run AI enrichment on findings (explanations + suggested fixes). Requires 'LLM key'."
+    },
+    {
+      "name": "llmProvider",
+      "type": "string",
+      "label": "LLM provider",
+      "defaultValue": "anthropic",
+      "required": false,
+      "groupName": "enrich",
+      "helpMarkDown": "LLM provider for enrichment. Currently only 'anthropic' is supported."
+    },
+    {
+      "name": "llmKey",
+      "type": "string",
+      "label": "LLM key",
+      "defaultValue": "",
+      "required": false,
+      "groupName": "enrich",
+      "helpMarkDown": "API key for the LLM provider (BYOK). Required when 'Run AI enrichment' is true. Pass a secret variable, e.g. $(ANTHROPIC_API_KEY)."
+    },
+    {
+      "name": "enrichModel",
+      "type": "string",
+      "label": "Enrich model",
+      "defaultValue": "",
+      "required": false,
+      "groupName": "enrich",
+      "helpMarkDown": "Claude model to use for enrichment (e.g. claude-sonnet-4-6). Empty = trustabl binary default."
+    },
+    {
+      "name": "enrichRules",
+      "type": "string",
+      "label": "Enrich rules",
+      "defaultValue": "",
+      "required": false,
+      "groupName": "enrich",
+      "helpMarkDown": "Comma-separated rule IDs to enrich (e.g. ADK-201,ADK-105). Empty = all findings."
     }
   ],
   "OutputVariables": [
@@ -141,7 +187,8 @@
     { "name": "riskScore", "description": "100 - readiness. Integer [0,100], higher = worse." },
     { "name": "maxSeverity", "description": "Highest severity among findings, or 'none'." },
     { "name": "findingsCount", "description": "Total finding count." },
-    { "name": "exitCode", "description": "trustabl native exit code (0 clean / 1 findings / 2 error)." }
+    { "name": "exitCode", "description": "trustabl native exit code (0 clean / 1 findings / 2 error)." },
+    { "name": "enrichJsonFile", "description": "Path to enriched.json (when 'Run AI enrichment' is true), empty otherwise." }
   ],
   "execution": {
     "Node20_1": { "target": "index.js" }

@@ -59,6 +59,51 @@ function capture(tool: string, args: string[], env?: NodeJS.ProcessEnv): { code:
   return { code: res.code, stdout: res.stdout || '' };
 }
 
+// ---- enrich: AI explanations + suggested fixes for findings (best-effort) ----
+interface EnrichResult { enrichedJsonFile: string; }
+const ENRICHED_JSON = 'enriched.json';
+
+function runEnrich(
+  exe: string,
+  jsonFile: string,
+  llmProvider: string,
+  llmKey: string,
+  enrichModel: string,
+  enrichRules: string[],
+): EnrichResult {
+  tl.setSecret(llmKey);
+
+  let r = capture(exe, ['llm', 'provider', 'set', llmProvider]);
+  if (r.code !== 0) {
+    tl.warning('Enrich skipped: failed to set LLM provider.');
+    return { enrichedJsonFile: '' };
+  }
+
+  r = capture(exe, ['llm', 'key', 'set', llmKey]);
+  if (r.code !== 0) {
+    tl.warning('Enrich skipped: failed to set LLM key.');
+    return { enrichedJsonFile: '' };
+  }
+
+  if (enrichModel) {
+    const mr = capture(exe, ['llm', 'model', 'set', enrichModel]);
+    if (mr.code !== 0) {
+      tl.warning(`Enrich: failed to set model "${enrichModel}", using default.`);
+    }
+  }
+
+  const args = ['enrich', '--input', jsonFile, '--repo', '.', '--output', ENRICHED_JSON];
+  for (const rule of enrichRules) args.push('--rule', rule);
+
+  r = capture(exe, args);
+  if (r.code !== 0) {
+    tl.warning(`Enrich failed (exit ${r.code}).`);
+    return { enrichedJsonFile: '' };
+  }
+
+  return { enrichedJsonFile: ENRICHED_JSON };
+}
+
 async function run(): Promise<void> {
   try {
     // ---- inputs ----
@@ -75,6 +120,16 @@ async function run(): Promise<void> {
     const publishArtifact = tl.getBoolInput('publishArtifact', false);
     const artifactName = tl.getInput('artifactName', false) || 'trustabl-scan-results';
     const githubToken = tl.getInput('githubToken', false) || process.env['GITHUB_TOKEN'] || '';
+    const enrich = tl.getBoolInput('enrich', false);
+    const llmProvider = tl.getInput('llmProvider', false) || 'anthropic';
+    const llmKey = tl.getInput('llmKey', false) || '';
+    const enrichModel = tl.getInput('enrichModel', false) || '';
+    const enrichRules = (tl.getInput('enrichRules', false) || '').split(',').map((r) => r.trim()).filter(Boolean);
+
+    if (enrich && !llmKey) {
+      tl.setResult(tl.TaskResult.Failed, 'llmKey is required when enrich is true');
+      return;
+    }
 
     const authHeader = githubToken ? ['-H', `Authorization: Bearer ${githubToken}`] : [];
 
@@ -161,12 +216,19 @@ async function run(): Promise<void> {
     const pAll = p100(projected(readiness, findings, ['critical', 'high', 'medium', 'low', 'info']));
     const dAll = pAll - score;
 
+    // ---- enrich (best-effort) ----
+    let enrichResult: EnrichResult = { enrichedJsonFile: '' };
+    if (enrich) {
+      enrichResult = runEnrich(exe, jsonFile, llmProvider, llmKey, enrichModel, enrichRules);
+    }
+
     // ---- output variables ----
     tl.setVariable('readinessScore', String(score), false, true);
     tl.setVariable('riskScore', String(risk), false, true);
     tl.setVariable('maxSeverity', maxSev, false, true);
     tl.setVariable('findingsCount', String(count), false, true);
     tl.setVariable('exitCode', String(nativeCode), false, true);
+    tl.setVariable('enrichJsonFile', enrichResult.enrichedJsonFile, false, true);
 
     // ---- console report ----
     const repo = tl.getVariable('Build.Repository.Name') || target;
@@ -184,6 +246,9 @@ async function run(): Promise<void> {
     console.log(`Fix +medium     : ${pCh} -> ${pChm}`);
     console.log(`Fix +low        : ${pChm} -> ${pChml}`);
     console.log(`Fix +info       : ${pChml} -> ${pAll}`);
+    if (enrichResult.enrichedJsonFile) {
+      console.log(`Enriched        : ${enrichResult.enrichedJsonFile}`);
+    }
     console.log('=====================================================');
     console.log('');
 
@@ -212,6 +277,12 @@ async function run(): Promise<void> {
     md.push(`| Native exit | \`${nativeCode}\` |`);
     md.push('');
     md.push('_Projected score is an estimate from trustabl\'s own formula (listed fixes resolved, nothing new). Not a re-scan._');
+    if (enrichResult.enrichedJsonFile) {
+      md.push('');
+      md.push('### AI enrichment');
+      md.push('');
+      md.push(`Findings were enriched with AI-generated explanations and suggested fixes — see \`${enrichResult.enrichedJsonFile}\` in the published artifact.`);
+    }
     const summaryFile = path.join(tl.getVariable('Agent.TempDirectory') || os.tmpdir(), 'trustabl-summary.md');
     fs.writeFileSync(summaryFile, md.join('\n'));
     tl.uploadSummary(summaryFile);
@@ -223,6 +294,9 @@ async function run(): Promise<void> {
       }
       if (fs.existsSync(sarifFile)) {
         tl.command('artifact.upload', { artifactname: artifactName, containerfolder: artifactName }, path.resolve(sarifFile));
+      }
+      if (enrichResult.enrichedJsonFile && fs.existsSync(enrichResult.enrichedJsonFile)) {
+        tl.command('artifact.upload', { artifactname: artifactName, containerfolder: artifactName }, path.resolve(enrichResult.enrichedJsonFile));
       }
     }
 

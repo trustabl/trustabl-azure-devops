@@ -5,6 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.2.0] — 2026-06-15
+
+### Added
+
+- **AI enrichment** (`enrich` input) — runs `trustabl enrich` against the JSON scan
+  output to generate plain-language explanations and suggested fixes per finding,
+  written to `enriched.json`. Bring-your-own-key (BYOK); currently supports
+  Anthropic via `llmProvider` / `llmKey`. Optional `enrichModel` and `enrichRules`
+  (comma-separated rule IDs) to scope the run. Best-effort — failures log a
+  warning and never fail the build.
+- **`enrichJsonFile` output variable** — path to `enriched.json` when `enrich` is
+  true, empty otherwise.
+- `enriched.json` is published alongside `trustabl.json` + `trustabl.sarif` when
+  `publishArtifact` is true and `enrich` ran successfully.
+
+### Notes
+
+- This release does not apply suggested fixes to source files or open pull
+  requests — it only generates the enrichment report. (No `autoEnrich` /
+  `createFixPr` equivalent, unlike `trustabl-action`.)
+
 ## [0.1.0] — 2026-06-04
 
 First release. Azure DevOps pipeline task that runs the
@@ -52,4 +73,5 @@ permitted. This extension is **not** open source.
 - Runs on Microsoft-hosted Linux, Windows, and macOS agents (needs `curl` + `tar`).
 - Requires the trustabl release assets on GitHub (downloaded at task run time).
 
+[0.2.0]: https://github.com/trustabl/trustabl-azure-devops/releases/tag/0.2.0
 [0.1.0]: https://github.com/trustabl/trustabl-azure-devops/releases/tag/0.1.0
