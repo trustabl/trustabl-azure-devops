@@ -3,17 +3,37 @@
   "id": "b2f1c8a4-3e6d-4c2a-9f1b-7a5e9d0c4f31",
   "name": "Trustabl",
   "friendlyName": "Trustabl",
-  "description": "Static reliability/safety scanner for AI agent repos (Claude, OpenAI, Google ADK, MCP). Gates the pipeline on risk + severity.",
+  "description": "Fix agent reliability issues. Scans Claude, OpenAI, Google ADK, LangChain, CrewAI and MCP agents, then gates the pipeline on risk and severity.",
   "helpMarkDown": "Runs the [trustabl](https://github.com/trustabl/trustabl) scanner over your repo, prints a readiness report, publishes JSON + SARIF artifacts, and can fail the build on a risk-score or severity threshold. See the extension README.",
   "category": "Utility",
   "author": "Trustabl",
-  "version": { "Major": 0, "Minor": 1, "Patch": 1 },
+  "version": {
+    "Major": 0,
+    "Minor": 1,
+    "Patch": 2
+  },
   "instanceNameFormat": "Trustabl $(target)",
   "groups": [
-    { "name": "thresholds", "displayName": "Failure gates", "isExpanded": true },
-    { "name": "output", "displayName": "Output & artifacts", "isExpanded": false },
-    { "name": "enrich", "displayName": "AI enrichment", "isExpanded": false },
-    { "name": "advanced", "displayName": "Advanced", "isExpanded": false }
+    {
+      "name": "thresholds",
+      "displayName": "Failure gates",
+      "isExpanded": true
+    },
+    {
+      "name": "output",
+      "displayName": "Output & artifacts",
+      "isExpanded": false
+    },
+    {
+      "name": "enrich",
+      "displayName": "AI enrichment",
+      "isExpanded": false
+    },
+    {
+      "name": "advanced",
+      "displayName": "Advanced",
+      "isExpanded": false
+    }
   ],
   "inputs": [
     {
@@ -183,14 +203,34 @@
     }
   ],
   "OutputVariables": [
-    { "name": "readinessScore", "description": "Readiness score, integer percent [0,100], higher = better." },
-    { "name": "riskScore", "description": "100 - readiness. Integer [0,100], higher = worse." },
-    { "name": "maxSeverity", "description": "Highest severity among findings, or 'none'." },
-    { "name": "findingsCount", "description": "Total finding count." },
-    { "name": "exitCode", "description": "trustabl native exit code (0 clean / 1 findings / 2 error)." },
-    { "name": "enrichJsonFile", "description": "Path to enriched.json (when 'Run AI enrichment' is true), empty otherwise." }
+    {
+      "name": "readinessScore",
+      "description": "Readiness score, integer percent [0,100], higher = better."
+    },
+    {
+      "name": "riskScore",
+      "description": "100 - readiness. Integer [0,100], higher = worse."
+    },
+    {
+      "name": "maxSeverity",
+      "description": "Highest severity among findings, or 'none'."
+    },
+    {
+      "name": "findingsCount",
+      "description": "Total finding count."
+    },
+    {
+      "name": "exitCode",
+      "description": "trustabl native exit code (0 clean / 1 findings / 2 error)."
+    },
+    {
+      "name": "enrichJsonFile",
+      "description": "Path to enriched.json (when 'Run AI enrichment' is true), empty otherwise."
+    }
   ],
   "execution": {
-    "Node20_1": { "target": "index.js" }
+    "Node20_1": {
+      "target": "index.js"
+    }
   }
 }

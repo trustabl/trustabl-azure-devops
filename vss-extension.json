@@ -2,34 +2,72 @@
   "manifestVersion": 1,
   "id": "trustabl-azure-devops-extension",
   "name": "Trustabl",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "trustabl",
   "public": true,
-  "description": "Static reliability/safety scanner for AI agent repos (Claude, OpenAI, Google ADK, MCP). Gates Azure Pipelines on risk + severity.",
-  "categories": ["Azure Pipelines"],
-  "tags": ["security", "ai-agents", "static-analysis", "sast", "devsecops", "reliability"],
+  "description": "Fix agent reliability issues in Azure Pipelines. Scans Claude, OpenAI, Google ADK, LangChain, CrewAI and MCP agents, then gates the pipeline on risk and severity.",
+  "categories": [
+    "Azure Pipelines"
+  ],
+  "tags": [
+    "agent-reliability",
+    "ai-agents",
+    "autofix",
+    "code-review",
+    "reliability",
+    "claude-agent-sdk",
+    "openai-agents-sdk",
+    "google-adk",
+    "mcp",
+    "langchain",
+    "langgraph",
+    "crewai",
+    "autogen",
+    "pydantic-ai",
+    "vercel-ai",
+    "security",
+    "sast",
+    "static-analysis",
+    "devsecops",
+    "sarif"
+  ],
   "targets": [
-    { "id": "Microsoft.VisualStudio.Services" }
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
   ],
   "icons": {
     "default": "images/icon.png"
   },
   "content": {
-    "details": { "path": "overview.md" },
-    "license": { "path": "LICENSE" }
+    "details": {
+      "path": "overview.md"
+    },
+    "license": {
+      "path": "LICENSE"
+    }
   },
   "links": {
-    "home": { "uri": "https://github.com/trustabl/trustabl" }
+    "home": {
+      "uri": "https://github.com/trustabl/trustabl"
+    }
   },
   "files": [
-    { "path": "Trustabl" },
-    { "path": "images", "addressable": true }
+    {
+      "path": "Trustabl"
+    },
+    {
+      "path": "images",
+      "addressable": true
+    }
   ],
   "contributions": [
     {
       "id": "trustabl-task",
       "type": "ms.vss-distributed-task.task",
-      "targets": ["ms.vss-distributed-task.tasks"],
+      "targets": [
+        "ms.vss-distributed-task.tasks"
+      ],
       "properties": {
         "name": "Trustabl"
       }
