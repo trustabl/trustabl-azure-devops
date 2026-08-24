@@ -1,8 +1,8 @@
 # Trustabl — Azure DevOps Extension
 
 An Azure Pipelines task that runs [trustabl](https://github.com/trustabl/trustabl),
-the static reliability/safety analyzer for AI agent repos (Claude Agent SDK,
-OpenAI Agents SDK, Google ADK, MCP).
+the agent reliability scanner for AI agent repos (Claude Agent SDK, OpenAI
+Agents SDK, Google ADK, LangChain, CrewAI, MCP).
 
 > **⚠️ Proprietary — not open source.** This extension is licensed for **use only**
 > (install it and reference the task in your pipelines). Copying, forking,
