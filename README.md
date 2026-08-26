@@ -8,6 +8,16 @@ Agents SDK, Google ADK, LangChain, CrewAI, MCP).
 > (install it and reference the task in your pipelines). Copying, forking,
 > modifying, or redistributing the source is **not** permitted. See [`LICENSE`](LICENSE).
 
+## Demo
+
+A sixty-second walkthrough: install it, gate it, run the first scan, and the
+exit code CI reads.
+
+[▶ Watch the demo](https://raw.githubusercontent.com/trustabl/trustabl-azure-devops/main/assets/trustabl-demo.mp4) · [`assets/trustabl-demo.mp4`](assets/trustabl-demo.mp4)
+
+Evaluating this against other tools? [docs/EVALUATION.md](docs/EVALUATION.md)
+covers how to trial it and how to read what it reports.
+
 ## Capabilities
 
 - Downloads the official `trustabl` release binary (Linux / Windows / macOS agents).
