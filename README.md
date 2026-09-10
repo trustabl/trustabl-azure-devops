@@ -1,6 +1,6 @@
 # Trustabl — Azure DevOps Extension
 
-An Azure Pipelines task that runs [trustabl](https://github.com/trustabl/trustabl),
+An Azure Pipelines task that runs [trustabl](https://github.com/trustabl/agent-reliability-analyzer),
 the agent reliability scanner for AI agent repos (Claude Agent SDK, OpenAI
 Agents SDK, Google ADK, LangChain, CrewAI, MCP).
 
@@ -65,8 +65,8 @@ steps:
       artifactName: trustabl-scan-results # name of that artifact
       sarifFile: trustabl.sarif           # SARIF output path
       jsonFile: trustabl.json             # JSON ScanResult output path
-      rulesRef: ''                        # pin a trustabl-rules git ref (empty = default)
-      rulesRepo: ''                       # override trustabl-rules source repo (empty = default)
+      rulesRef: ''                        # pin an agent-reliability-rules git ref (empty = default)
+      rulesRepo: ''                       # override agent-reliability-rules source repo (empty = default)
       githubToken: $(GITHUB_TOKEN)        # optional secret to dodge the GitHub API rate limit
       enrich: false                       # run AI enrichment on findings (explanations + suggested fixes)
       llmProvider: anthropic              # LLM provider for enrichment (currently only 'anthropic')
@@ -136,8 +136,8 @@ scan/gate results are unaffected.
 | `artifactName` | `trustabl-scan-results` | Artifact name. |
 | `sarifFile` | `trustabl.sarif` | SARIF output path. |
 | `jsonFile` | `trustabl.json` | JSON ScanResult output path. |
-| `rulesRef` | _(default)_ | Pin a `trustabl-rules` git ref. |
-| `rulesRepo` | _(default)_ | Override `trustabl-rules` source repo (sets `TRUSTABL_RULES_REPO`). |
+| `rulesRef` | _(default)_ | Pin an `agent-reliability-rules` git ref. |
+| `rulesRepo` | _(default)_ | Override `agent-reliability-rules` source repo (sets `TRUSTABL_RULES_REPO`). |
 | `githubToken` | _(none)_ | Optional bearer token to avoid the anonymous GitHub API rate limit on version resolution + download. Pass a secret, e.g. `$(GITHUB_TOKEN)`. |
 | `enrich` | `false` | Run AI enrichment on findings (explanations + suggested fixes). Requires `llmKey`. |
 | `llmProvider` | `anthropic` | LLM provider for enrichment. Currently only `anthropic`. |

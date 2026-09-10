@@ -136,7 +136,7 @@ async function run(): Promise<void> {
     // ---- resolve version ----
     let ver = version;
     if (ver === 'latest') {
-      const api = capture('curl', ['-sSL', ...authHeader, 'https://api.github.com/repos/trustabl/trustabl/releases/latest']);
+      const api = capture('curl', ['-sSL', ...authHeader, 'https://api.github.com/repos/trustabl/agent-reliability-analyzer/releases/latest']);
       try { ver = JSON.parse(api.stdout).tag_name; } catch { ver = ''; }
       if (!ver) {
         tl.setResult(tl.TaskResult.Failed, "Could not resolve trustabl version. Pin 'version' to a tag, or set a GitHub token.");
@@ -154,7 +154,7 @@ async function run(): Promise<void> {
     const dest = path.join(tl.getVariable('Agent.TempDirectory') || os.tmpdir(), 'trustabl-bin');
     tl.mkdirP(dest);
     const archivePath = path.join(dest, asset);
-    const url = `https://github.com/trustabl/trustabl/releases/download/${ver}/${asset}`;
+    const url = `https://github.com/trustabl/agent-reliability-analyzer/releases/download/${ver}/${asset}`;
 
     const dl = capture('curl', ['-fSL', '-H', 'Accept: application/octet-stream', ...authHeader, '-o', archivePath, url]);
     if (dl.code !== 0) {

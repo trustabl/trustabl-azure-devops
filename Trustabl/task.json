@@ -4,7 +4,7 @@
   "name": "Trustabl",
   "friendlyName": "Trustabl",
   "description": "Fix agent reliability issues. Scans Claude, OpenAI, Google ADK, LangChain, CrewAI and MCP agents, then gates the pipeline on risk and severity.",
-  "helpMarkDown": "Runs the [trustabl](https://github.com/trustabl/trustabl) scanner over your repo, prints a readiness report, publishes JSON + SARIF artifacts, and can fail the build on a risk-score or severity threshold. See the extension README.",
+  "helpMarkDown": "Runs the [trustabl](https://github.com/trustabl/agent-reliability-analyzer) scanner over your repo, prints a readiness report, publishes JSON + SARIF artifacts, and can fail the build on a risk-score or severity threshold. See the extension README.",
   "category": "Utility",
   "author": "Trustabl",
   "version": {
@@ -136,7 +136,7 @@
       "defaultValue": "",
       "required": false,
       "groupName": "advanced",
-      "helpMarkDown": "Pin a trustabl-rules git ref. Empty = trustabl default."
+      "helpMarkDown": "Pin an agent-reliability-rules git ref. Empty = trustabl default."
     },
     {
       "name": "rulesRepo",
@@ -145,7 +145,7 @@
       "defaultValue": "",
       "required": false,
       "groupName": "advanced",
-      "helpMarkDown": "Override trustabl-rules source repo (sets TRUSTABL_RULES_REPO)."
+      "helpMarkDown": "Override agent-reliability-rules source repo (sets TRUSTABL_RULES_REPO)."
     },
     {
       "name": "githubToken",
