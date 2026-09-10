@@ -1,6 +1,6 @@
 # Trustabl
 
-Runs [trustabl](https://github.com/trustabl/trustabl) — the static
+Runs [trustabl](https://github.com/trustabl/agent-reliability-analyzer) — the static
 reliability/safety analyzer for AI agent repos (Claude Agent SDK, OpenAI Agents
 SDK, Google ADK, MCP) — as an Azure Pipelines task.
 
@@ -50,8 +50,8 @@ steps:
       artifactName: trustabl-scan-results # name of that artifact
       sarifFile: trustabl.sarif           # SARIF output path
       jsonFile: trustabl.json             # JSON ScanResult output path
-      rulesRef: ''                        # pin a trustabl-rules git ref (empty = default)
-      rulesRepo: ''                       # override trustabl-rules source repo (empty = default)
+      rulesRef: ''                        # pin an agent-reliability-rules git ref (empty = default)
+      rulesRepo: ''                       # override agent-reliability-rules source repo (empty = default)
       githubToken: $(GITHUB_TOKEN)        # optional secret to dodge the GitHub API rate limit
 ```
 
@@ -82,8 +82,8 @@ steps:
 | `artifactName` | `trustabl-scan-results` | Artifact name. |
 | `sarifFile` | `trustabl.sarif` | SARIF output path. |
 | `jsonFile` | `trustabl.json` | JSON ScanResult output path. |
-| `rulesRef` | _(default)_ | Pin a `trustabl-rules` git ref. |
-| `rulesRepo` | _(default)_ | Override `trustabl-rules` source repo. |
+| `rulesRef` | _(default)_ | Pin an `agent-reliability-rules` git ref. |
+| `rulesRepo` | _(default)_ | Override `agent-reliability-rules` source repo. |
 | `githubToken` | _(none)_ | Optional bearer token to avoid the anonymous GitHub API rate limit on version resolution + download. Pass a secret, e.g. `$(GITHUB_TOKEN)`. |
 
 ## Output variables
