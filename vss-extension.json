@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "trustabl-azure-devops-extension",
   "name": "Trustabl",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "trustabl",
   "public": true,
   "description": "Fix agent reliability issues in Azure Pipelines. Scans Claude, OpenAI, Google ADK, LangChain, CrewAI and MCP agents, then gates the pipeline on risk and severity.",
