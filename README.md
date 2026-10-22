@@ -2,7 +2,8 @@
 
 An Azure Pipelines task that runs [trustabl](https://github.com/trustabl/agent-reliability-analyzer),
 the agent reliability scanner for AI agent repos (Claude Agent SDK, OpenAI
-Agents SDK, Google ADK, LangChain, CrewAI, MCP).
+Agents SDK, Google ADK, LangChain, LangGraph, CrewAI, AutoGen, AG2, Pydantic AI,
+Vercel AI SDK, MCP).
 
 > **⚠️ Proprietary — not open source.** This extension is licensed for **use only**
 > (install it and reference the task in your pipelines). Copying, forking,
