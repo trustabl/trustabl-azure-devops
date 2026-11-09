@@ -1,0 +1,110 @@
+# Opens a pull request when trustabl publishes a release newer than the one the
+# task pins as its `version` default.
+#
+# The default is pinned so a trustabl release cannot change users' results by
+# itself. The cost of a pin is remembering to move it; this workflow does the
+# remembering. Nothing ships until a human merges the pull request and pushes a
+# v* tag (publish-extension.yml).
+#
+# Needs Settings -> Actions -> General -> "Allow GitHub Actions to create and
+# approve pull requests".
+name: engine-bump
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'     # Mondays, 07:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CURRENT=$(sed -n "s/^const DEFAULT_VERSION = '\(.*\)';$/\1/p" Trustabl/index.ts)
+          LATEST=$(gh api repos/trustabl/agent-reliability-analyzer/releases/latest --jq .tag_name)
+          if [ -z "$CURRENT" ] || [ -z "$LATEST" ]; then
+            echo "::error::could not read the pinned ($CURRENT) or latest ($LATEST) trustabl version"
+            exit 1
+          fi
+          NEWEST=$(printf '%s\n%s\n' "$CURRENT" "$LATEST" | sort -V | tail -n1)
+          BUMP=false
+          if [ "$CURRENT" != "$LATEST" ] && [ "$NEWEST" = "$LATEST" ]; then BUMP=true; fi
+          {
+            echo "current=$CURRENT"
+            echo "latest=$LATEST"
+            echo "bump=$BUMP"
+          } >> "$GITHUB_OUTPUT"
+          echo "Pinned $CURRENT, latest $LATEST, bump: $BUMP"
+
+      # The task refuses to run a binary it cannot verify, so a pin to a release
+      # without a complete checksums.txt would break every default run.
+      - name: Check the release is verifiable
+        if: steps.versions.outputs.bump == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LATEST: ${{ steps.versions.outputs.latest }}
+        run: |
+          gh release download "$LATEST" -R trustabl/agent-reliability-analyzer \
+            -p checksums.txt -O "$RUNNER_TEMP/checksums.txt"
+          V="${LATEST#v}"
+          for asset in "trustabl_${V}_linux_amd64.tar.gz" "trustabl_${V}_linux_arm64.tar.gz" \
+                       "trustabl_${V}_darwin_amd64.tar.gz" "trustabl_${V}_darwin_arm64.tar.gz" \
+                       "trustabl_${V}_windows_amd64.zip"; do
+            if ! awk -v a="$asset" '$2 == a { found = 1 } END { exit !found }' "$RUNNER_TEMP/checksums.txt"; then
+              echo "::error::$asset is not listed in checksums.txt for $LATEST"
+              exit 1
+            fi
+          done
+
+      - name: Move the pin
+        if: steps.versions.outputs.bump == 'true'
+        env:
+          CURRENT: ${{ steps.versions.outputs.current }}
+          LATEST: ${{ steps.versions.outputs.latest }}
+        run: |
+          OLD=$(printf '%s' "$CURRENT" | sed 's/\./\\./g')
+          sed -i "s/${OLD}\b/${LATEST}/g" Trustabl/index.ts Trustabl/task.json README.md overview.md
+          grep -q "^const DEFAULT_VERSION = '${LATEST}';$" Trustabl/index.ts
+          grep -q "\"defaultValue\": \"${LATEST}\"" Trustabl/task.json
+
+      # This repository has no pull request CI, so prove the task still compiles.
+      - uses: actions/setup-node@v4
+        if: steps.versions.outputs.bump == 'true'
+        with:
+          node-version: '18'
+      - name: Build the task
+        if: steps.versions.outputs.bump == 'true'
+        working-directory: Trustabl
+        run: |
+          npm ci
+          npm run build   # index.js and node_modules are gitignored, so stay out of the PR
+
+      - uses: peter-evans/create-pull-request@v7
+        if: steps.versions.outputs.bump == 'true'
+        with:
+          branch: chore/engine-${{ steps.versions.outputs.latest }}
+          title: "chore: default to trustabl ${{ steps.versions.outputs.latest }}"
+          commit-message: "chore: default to trustabl ${{ steps.versions.outputs.latest }}"
+          body: |
+            trustabl released `${{ steps.versions.outputs.latest }}`; the task pins
+            `${{ steps.versions.outputs.current }}` as its `version` default.
+
+            This moves the default in `Trustabl/index.ts`, `Trustabl/task.json`, the README
+            and `overview.md` (the Marketplace page). The release's `checksums.txt` lists
+            every platform asset the task downloads, and the task compiled in the workflow
+            run that opened this pull request.
+
+            Before merging, read the trustabl release notes. A release that changes scan
+            output may need task changes in the same pull request.
+
+            Merging publishes nothing. Users get the new default only after a `v*` tag
+            runs `publish-extension.yml`.

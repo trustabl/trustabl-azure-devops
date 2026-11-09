@@ -21,7 +21,7 @@ covers how to trial it and how to read what it reports.
 
 ## Capabilities
 
-- Downloads the official `trustabl` release binary (Linux / Windows / macOS agents).
+- Downloads the official `trustabl` release binary (Linux / Windows / macOS agents) and verifies its sha256 against the release `checksums.txt`.
 - Scans your sources for tools, agents, subagents, and MCP servers.
 - Computes a **readiness** score and its inverse **risk** score.
 - **Fails the build** on a risk-score or severity threshold (both optional).
@@ -57,7 +57,7 @@ steps:
     name: trustabl                        # ref name → read outputs as $(trustabl.<var>)
     inputs:
       target: $(Build.SourcesDirectory)   # path or GitHub URL to scan
-      version: latest                     # trustabl release tag (e.g. v0.5.0) or 'latest'
+      version: v0.1.16                    # exact trustabl release, or 'latest' for the newest
       detectors: ''                       # subset: claude_sdk,openai_sdk,google_adk — empty = all
       strict: false                       # --strict: fail on ANY finding, regardless of severity
       riskScoreThreshold: '0'             # fail when risk (100 - readiness) >= N (1-100); 0 = off
@@ -128,7 +128,7 @@ scan/gate results are unaffected.
 | Name | Default | Description |
 |---|---|---|
 | `target` | `$(Build.SourcesDirectory)` | Path or GitHub URL to scan. |
-| `version` | `latest` | trustabl release tag (e.g. `v0.5.0`) or `latest`. |
+| `version` | `v0.1.16` | trustabl release to run: an exact tag, or `latest` for the newest release at run time. See [Engine version](#engine-version). |
 | `detectors` | _(all)_ | Comma-separated subset: `claude_sdk,openai_sdk,google_adk`. |
 | `strict` | `false` | Pass `--strict` (fail on any finding). |
 | `riskScoreThreshold` | `0` | Fail when `risk >= N` (1-100). `0` disables. |
@@ -145,6 +145,20 @@ scan/gate results are unaffected.
 | `llmKey` | _(none)_ | API key for the LLM provider (BYOK). Required when `enrich` is true. Pass a secret, e.g. `$(ANTHROPIC_API_KEY)`. |
 | `enrichModel` | _(default)_ | Claude model for enrichment (e.g. `claude-sonnet-4-6`). Empty = trustabl binary default. |
 | `enrichRules` | _(all)_ | Comma-separated rule IDs to enrich (e.g. `ADK-201,ADK-105`). Empty = all findings. |
+
+## Engine version
+
+By default the task runs one exact trustabl release, `v0.1.16`, and checks its
+sha256 against that release's `checksums.txt` before running it. A new trustabl
+release does not change your results until a new version of this extension moves
+the pin.
+
+- Keep the default: leave `version` unset.
+- Always run the newest release: `version: latest` (the default before the pin).
+- Run a specific release: `version: v0.1.15`.
+
+Classic (designer) pipelines store each input's value when the task is added, so
+a task added with the old default keeps `latest` until you change the field.
 
 ## Output variables
 

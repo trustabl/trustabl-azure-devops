@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Changed
+
+- **The `version` input now defaults to trustabl `v0.1.16` instead of `latest`.**
+  A new trustabl release no longer changes a pipeline's results on its own; the
+  pin moves only in a reviewed pull request and a new extension version. To keep
+  the old behaviour, set `version: latest`; any explicit `version` keeps working
+  as before.
+
+### Security
+
+- **The downloaded binary is now sha256-verified** against the release
+  `checksums.txt` before it runs. The task fails if `checksums.txt` cannot be
+  fetched, does not list the asset, or lists a different digest.
+
+### Added
+
+- `engine-bump` workflow (weekly and on demand): opens a pull request that moves
+  the default pin when a newer trustabl release exists. It never merges.
+
+
 ## [0.2.0] — 2026-06-15
 
 ### Added

@@ -1,7 +1,8 @@
 /*
  * Trustabl — Azure DevOps pipeline task.
  *
- * Downloads the trustabl release binary, scans the target, computes the
+ * Downloads the trustabl release binary (sha256-verified against the release
+ * checksums.txt), scans the target, computes the
  * readiness/risk score, gates the build on risk/severity thresholds, publishes
  * JSON + SARIF artifacts, and uploads a markdown run summary.
  *
@@ -9,6 +10,7 @@
  */
 
 import tl = require('azure-pipelines-task-lib/task');
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -52,6 +54,27 @@ function projected(readiness: Readiness[], findings: Finding[], rm: string[]): n
 }
 const p100 = (x: number): number => Math.floor(x * 100 + 0.5);
 const clampScore = (x: number): number => (x < 0 ? 0 : x > 100 ? 100 : x);
+
+// ---- release pin + checksum verification ----
+// The trustabl release used when the `version` input is empty. Pinned rather than
+// 'latest' so a new release cannot change a pipeline's results until this pin is
+// bumped (engine-bump.yml opens that pull request). Keep it equal to the
+// `version` defaultValue in task.json.
+const DEFAULT_VERSION = 'v0.1.16';
+
+// checksums.txt is `<sha256>  <filename>` (sha256sum format). Returns the
+// lowercase digest listed for exactly `asset`, or '' when it is not listed.
+function expectedSha256(checksums: string, asset: string): string {
+  for (const line of checksums.split('\n')) {
+    const m = line.trim().match(/^([0-9a-fA-F]{64})\s+\*?(.+)$/);
+    if (m && m[2].trim() === asset) return m[1].toLowerCase();
+  }
+  return '';
+}
+
+function sha256File(file: string): string {
+  return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+}
 
 // ---- run a tool, capture stdout + exit code (never throws on nonzero) ----
 function capture(tool: string, args: string[], env?: NodeJS.ProcessEnv): { code: number; stdout: string } {
@@ -108,7 +131,7 @@ async function run(): Promise<void> {
   try {
     // ---- inputs ----
     const target = tl.getInput('target', false) || tl.getVariable('Build.SourcesDirectory') || '.';
-    const version = tl.getInput('version', false) || 'latest';
+    const version = tl.getInput('version', false) || DEFAULT_VERSION;
     const detectors = tl.getInput('detectors', false) || '';
     const strict = tl.getBoolInput('strict', false);
     const rulesRef = tl.getInput('rulesRef', false) || '';
@@ -161,6 +184,30 @@ async function run(): Promise<void> {
       tl.setResult(tl.TaskResult.Failed, `Failed to download ${asset} from ${url}`);
       return;
     }
+
+    // ---- verify sha256 against the release checksums.txt ----
+    // Mandatory. A checksums.txt that cannot be fetched, or that does not list
+    // this asset, fails the task just like a mismatch: those are the shapes a
+    // substituted release takes, and nothing the scan reports could be trusted.
+    const checksumsPath = path.join(dest, 'checksums.txt');
+    const checksumsUrl = `https://github.com/trustabl/agent-reliability-analyzer/releases/download/${ver}/checksums.txt`;
+    const sums = capture('curl', ['-fsSL', ...authHeader, '-o', checksumsPath, checksumsUrl]);
+    if (sums.code !== 0) {
+      tl.setResult(tl.TaskResult.Failed, `Could not fetch checksums.txt for ${ver}; refusing to run an unverified trustabl binary.`);
+      return;
+    }
+    const expected = expectedSha256(fs.readFileSync(checksumsPath, 'utf8'), asset);
+    if (!expected) {
+      tl.setResult(tl.TaskResult.Failed, `${asset} is not listed in checksums.txt for ${ver}; refusing to run an unverified trustabl binary.`);
+      return;
+    }
+    const actual = sha256File(archivePath);
+    if (actual !== expected) {
+      tl.setResult(tl.TaskResult.Failed, `Checksum mismatch for ${asset}: expected ${expected}, got ${actual}`);
+      return;
+    }
+    console.log(`checksum verified: ${asset}`);
+
     // bsdtar (Windows 10+) extracts zip; gnu tar extracts tar.gz.
     const untar = capture('tar', ['-xf', archivePath, '-C', dest]);
     if (untar.code !== 0) {
